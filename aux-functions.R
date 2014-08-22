@@ -11,7 +11,12 @@ read_stormdata <- function(url,nameout){
 data<-read.csv("stormdata.csv")
 vars<-c("BGN_DATE","EVTYPE","FATALITIES","INJURIES","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")
 data$year<-as.numeric(format(as.Date(data$BGN_DATE,"%m/%d/%Y"),"%Y"))
-
+a<-data[data$year>=2001,]
+xtabs(~a$PROPDMGEXP,drop.unused.levels=T)
+a$human_inj<-a$INJURIES+a$FATALITIES
+a$crop_mult<-ifelse(a$CROPDMGEXP=='K',1000,ifelse(a$CROPDMGEXP=='M',1000000,ifelse(a$CROPDMGEXP=='B',1000000000,1)))
+a$prop_mult<-ifelse(a$PROPDMGEXP=='K',1000,ifelse(a$PROPDMGEXP=='M',1000000,ifelse(a$PROPDMGEXP=='B',1000000000,1)))
+a$prop_dmg<-a$PROPDMG*a$prop_mult+a$CROPDMG*a$crop_mult
 url1 <- "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"  
 download.file(url1, "activityData.zip", mode="wb") 
 unzip("activity.zip", overwrite=T)
