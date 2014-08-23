@@ -1,0 +1,82 @@
+---
+title: "PeerAssessment2"
+author: "Giuliano Filippini"
+date: "17/8/2014"
+output: html_document
+---
+
+For this report the mains interest is on evaluating human losses and economic losses by the weather events. 
+
+### Data Preparation & Data Information
+
+The analysis was made on a dataset from The National Weather Service (NWS) of the National Ocean and Atmospheric Administration (NOAA). The dataset used is available at this [link](http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip "repdata-data-StormData.csv.bz2").
+
+With the following function, is posible to download the file. The url used was the one on the link above and the name of the file could be anyone with the extension ".csv.bz2".
+```{r Donwload the file function}
+## this function downloads and unzips the file
+
+read_stormdata <- function(url,nameout){
+    url1<-url
+    download.file(url1,destfile=nameout)
+    bunzip2(nameout)
+    
+}
+```
+
+##### About Storm Data
+
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+
+The U.S. National Oceanic and Atmospheric Administration's (NOAA) database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
+
+The data set has 902.297 observations on 37 variables reporting various aspects on weather ocurrences across the United States since 1950. There are plenty of information based on date/time of the event; type of weather ocurrence; fatalities and injuries; amount on crop and property losses, among others. Further information coud be acessed on oficial documentation provided by the NOAA:
+
+* National Weather Service [Storm Data Documentation](http://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf "Storm Data Documentation") 
+
+* National Climatic Data Center Storm Events [FAQ](http://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf "FAQ")
+
+
+##### Data Preparation
+
+###### 1. Reading the data
+
+Among the variables on the original dataset the main interest is on variables that can measure human hazards and economic damage. The variables used in this study are:
+
+* BGN_DATE: date of the ocurrence;
+* EVTYPE: type of event;
+* FATALITIES: number of fatalities;
+* INJURIES: number of people injuried;
+*PROPDMG: value of property damage in US$;
+* PRPDMGEXP: multiply the value on _PROPDMG_, vales are (K: thousands, M:million, B:billion, etc.);
+* CROPDMG: value of crop damages in US$;
+* CROPDMGEXP: multiply the valeu on _CORPDMG_, values are (K: thousands, M:million, B:billion, etc.).
+
+Another point of interest is that the NOAA dataset have information since 1950. For this analysis will be evaluated the ocurrences on the last 10 years. Since the last year available on the present dataset is 2011, the database will be filtered on dates greater than 2001.
+
+The following code reads and simplify the data:
+```{r read and simplify data}
+## The code reads stormdata and keeps only the variables of interest
+data<-read.csv("stormdata.csv")
+vars<-c("BGN_DATE","EVTYPE","FATALITIES","INJURIES","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")
+data<-data[vars]
+# creates a variable named "year" with the year on BGN_DATE
+data$year<-as.numeric(format(as.Date(data$BGN_DATE,"%m/%d/%Y"),"%Y"))
+# excludes all years before 2001
+data<-data[data$year>=2001,]
+```
+
+###### 2. Creating new variables
+
+Some variables were created for the analysis. To simplify, human hazards will be the sum of **INJURIES** and **FATALITIES** and economic damage will be the sum of **CROPDMG** and **PROPDMG**. Since economic damage have multiple factors, some preparation is needed to achive the correct values.
+```{r creating variables}
+## human hazards
+data$human_inj<-data$INJURIES+data$FATALITIES
+## factors to multiply economic losses
+data$crop_mult<-ifelse(data$CROPDMGEXP=='K',3,ifelse(data$CROPDMGEXP=='M',6,ifelse(data$CROPDMGEXP=='B',9,0)))
+data$prop_mult<-ifelse(data$PROPDMGEXP=='K',3,ifelse(data$PROPDMGEXP=='M',6,ifelse(data$PROPDMGEXP=='B',9,0)))
+## calculating economic losses
+data$prop_dmg<-data$PROPDMG*10^data$prop_mult+data$CROPDMG*10^data$crop_mult
+## economic losses in millions
+data$econ_dmg<-data$prop_dmg*10^(-6)
+```
+
