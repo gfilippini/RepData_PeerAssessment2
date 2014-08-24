@@ -8,7 +8,10 @@ read_stormdata <- function(url,nameout){
     
 }
 
+options(scipen=1)
 library(R.utils)
+library(ggplot2)
+library(knitr)
 data<-read.csv("stormdata.csv")
 vars<-c("BGN_DATE","EVTYPE","FATALITIES","INJURIES","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")
 data$year<-as.numeric(format(as.Date(data$BGN_DATE,"%m/%d/%Y"),"%Y"))
@@ -47,3 +50,5 @@ plot_hh_dmg<-ggplot(data = hh_dmg[1:10, ], aes(x = reorder(type,-hh_dmg), y = hh
 
 plot_hh_dmg <- plot_hh_dmg + geom_bar(fill = "red", stat = "identity") + theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 1))
 
+kable(ev_dmg[1:10,c(2,1)],format="html")
+kable(ec_dmg[1:10,c(2,1)],format="html",caption="table of most harmful events",digits=2)

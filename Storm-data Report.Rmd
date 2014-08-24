@@ -1,18 +1,30 @@
 ---
-title: "PeerAssessment2"
+title: "The most harmful climate events to economic and human health"
 author: "Giuliano Filippini"
 date: "17/8/2014"
 output: html_document
 ---
 
-For this report the mains interest is on evaluating human losses and economic losses by the weather events. 
+```{r libraries, echo=FALSE, results='hide', message=FALSE}
+## this chunk of code prepares the libraries needed on this document
+options(scipen=1)
+library(R.utils)
+library(ggplot2)
+library(knitr)
+```
+
+### Synopsis
+
+This report brings the most harmful climate events to the U.S. economy and to the people. Since climate change over the years, the scope on this resport was reduced to the years of 2001 to 2011 and brings which events caused more losses on the country.
+By the graphs is posible to evaluate that Tornados is the more concerning event with 15.000 people impacted (3 times the 2nd event), and with US$20 Billion on economic losses (4th on the ranking).
+The information was obteined from a dataset from the National Weather Service (NWS) of the National Ocean and Atmospheric Administration (NOAA) and the analysis was conduced in R programing language.
 
 ### Data Preparation & Data Information
 
 The analysis was made on a dataset from The National Weather Service (NWS) of the National Ocean and Atmospheric Administration (NOAA). The dataset used is available at this [link](http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip "repdata-data-StormData.csv.bz2").
 
 With the following function, is posible to download the file. The url used was the one on the link above and the name of the file could be anyone with the extension ".csv.bz2".
-```{r Donwload the file function}
+```{r Download the file function}
 ## this function downloads and unzips the file
 
 read_stormdata <- function(url,nameout){
@@ -23,7 +35,7 @@ read_stormdata <- function(url,nameout){
 }
 ```
 
-##### About Storm Data
+#### About Storm Data
 
 Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
 
@@ -36,9 +48,9 @@ The data set has 902.297 observations on 37 variables reporting various aspects 
 * National Climatic Data Center Storm Events [FAQ](http://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf "FAQ")
 
 
-##### Data Processing
+#### Data Processing
 
-###### 1. Reading the data
+##### 1. Reading the data
 
 Among the variables on the original dataset the main interest is on variables that can measure human hazards and economic damage. The variables used in this study are:
 
@@ -65,7 +77,7 @@ data$year<-as.numeric(format(as.Date(data$BGN_DATE,"%m/%d/%Y"),"%Y"))
 data<-data[data$year>=2001,]
 ```
 
-###### 2. Creating new variables
+##### 2. Creating new variables
 
 Some variables were created for the analysis. To simplify, human hazards will be the sum of **INJURIES** and **FATALITIES** and economic damage will be the sum of **CROPDMG** and **PROPDMG**. Since economic damage have multiple factors, some preparation is needed to achive the correct values.
 ```{r creating variables}
@@ -80,6 +92,45 @@ data$prop_dmg<-data$PROPDMG*10^data$prop_mult+data$CROPDMG*10^data$crop_mult
 data$econ_dmg<-data$prop_dmg*10^(-6)
 ```
 
-##### Results
+### Results
+
+#### Harmful climate events to human health
+
+
+```{r human losses}
+## prepare data for human losses
+hh_dmg<-data.frame(tapply(data$human_inj, as.character(data$EVTYPE), sum,na.rm=T))
+names(hh_dmg)<-"hh_dmg"
+hh_dmg$type<-as.character(row.names(hh_dmg))
+hh_dmg <- hh_dmg[order(-hh_dmg$hh_dmg),]
+row.names(hh_dmg)<-NULL
+## table with most frequent human losses
+kable(hh_dmg[1:10,c(2,1)],format="markdown")
+## plot on the most harmfull events
+plot_hh_dmg<-ggplot(data = hh_dmg[1:10, ], aes(x = reorder(type,-hh_dmg), y = hh_dmg)) + xlab("Event Type") + ylab("Total Impact\ninjuries and deaths")
+plot_hh_dmg + geom_bar(fill = "red", stat = "identity") + theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 1)) + ggtitle("10 most  harmful  climate events to human\nyears 2001-2011")
+```
+
+
+As can be seen from the table and the graph, the main cause on human harm is tornados with over than 15.000 casualties on the last 10 years. The second cause is excessive heat with less than 5.000.
+
+#### Harmful climate events to the economy
+
+```{r economic losses}
+## prepare base to economic losses consolidate values on economic losses
+ec_dmg<-data.frame(tapply(data$econ_dmg, as.character(data$EVTYPE), sum,na.rm=T))
+names(ec_dmg)<-"ec_dmg"
+ec_dmg$type<-as.character(row.names(ec_dmg))
+ec_dmg <- ec_dmg[order(-ec_dmg$ec_dmg),]
+row.names(ec_dmg)<-NULL
+## makes the table for economic losses
+kable(ec_dmg[1:10,c(2,1)],format="markdown",digits=2)
+## plot on economic losses
+plot_ec_dmg<-ggplot(data = ec_dmg[1:10, ], aes(x = reorder(type,-ec_dmg), y = ec_dmg)) + xlab("Event Type") + ylab("Total Impact \n(million US$)")
+plot_ec_dmg + geom_bar(fill = "darkgreen", stat = "identity") + theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 1)) + ggtitle("10 most economic losses\nyears 2001-2011")
+```
+
+From the economic losses, Flood causes more impact with prejudice of US$ 137,5 Billion on the last 10 years. Hurricane/Typhoon causes almost US$72 Billion. Tornados is the 4th main cause on economic losses with almost US$20 Billion of prejudice. The graph shows the 10 most important economic losses on the last 10 years.
+
 
 
