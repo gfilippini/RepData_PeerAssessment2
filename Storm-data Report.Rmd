@@ -36,7 +36,7 @@ The data set has 902.297 observations on 37 variables reporting various aspects 
 * National Climatic Data Center Storm Events [FAQ](http://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf "FAQ")
 
 
-##### Data Preparation
+##### Data Processing
 
 ###### 1. Reading the data
 
@@ -79,4 +79,7 @@ data$prop_dmg<-data$PROPDMG*10^data$prop_mult+data$CROPDMG*10^data$crop_mult
 ## economic losses in millions
 data$econ_dmg<-data$prop_dmg*10^(-6)
 ```
+
+##### Results
+
 
